@@ -86,26 +86,26 @@ export default function AdminPage() {
   }
 
   async function handleApproveSubmission(sub: Submission): Promise<void> {
-    setLoading(true);
-    await supabase
-      .from("task_completions")
-      .update({ status: "approved" })
-      .eq("id", sub.id);
+  setLoading(true);
+  await supabase
+    .from("task_completions")
+    .update({ status: "approved" })
+    .eq("id", sub.id);
 
-    const { data: user } = await supabase
-      .from("users")
-      .select("balance")
-      .eq("id", sub.user_id)
-      .single();
+  const { data: user } = await supabase
+    .from("users")
+    .select("task_balance")
+    .eq("id", sub.user_id)
+    .single();
 
-    await supabase
-      .from("users")
-      .update({ balance: (user?.balance || 0) + sub.tasks.reward })
-      .eq("id", sub.user_id);
+  await supabase
+    .from("users")
+    .update({ task_balance: (user?.task_balance || 0) + sub.tasks.reward })
+    .eq("id", sub.user_id);
 
-    fetchAll();
-    setLoading(false);
-  }
+  fetchAll();
+  setLoading(false);
+}
 
   async function handleRejectSubmission(id: string): Promise<void> {
     setLoading(true);

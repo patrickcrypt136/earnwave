@@ -58,7 +58,7 @@ export default function RegisterForm() {
 
     const { data: upline } = await supabase
       .from("users")
-      .select("id, balance, total_referrals")
+      .select("id, balance, total_referrals, referral_balance")
       .eq("referral_code", refCode)
       .single();
 
@@ -71,17 +71,18 @@ export default function RegisterForm() {
     const newReferralCode = generateReferralCode(form.full_name);
 
     const { data: newUser, error } = await supabase
-      .from("users")
-      .insert([{
-        full_name: form.full_name,
-        email: form.email.toLowerCase(),
-        phone: form.phone,
-        referral_code: newReferralCode,
-        upline_id: upline.id,
-        balance: 3.00,
-      }])
-      .select()
-      .single();
+  .from("users")
+  .insert([{
+    full_name: form.full_name,
+    email: form.email.toLowerCase(),
+    phone: form.phone,
+    referral_code: newReferralCode,
+    upline_id: upline.id,
+    balance: 0,
+    referral_balance: 3.00,
+  }])
+  .select()
+  .single();
 
     if (error) {
       setErrorMsg(error.message.includes("unique") ? "Email already registered." : "Something went wrong.");
@@ -100,15 +101,14 @@ export default function RegisterForm() {
       amount: 1.00,
     }]);
 
-    await supabase
-      .from("users")
-      .update({
-        balance: (upline.balance || 0) + 1,
-        total_referrals: (upline.total_referrals || 0) + 1,
-      })
-      .eq("id", upline.id);
-
-    localStorage.setItem("earnwave_user_id", newUser.id);
+   await supabase
+  .from("users")
+  .update({
+    referral_balance: (upline.referral_balance || 0) + 2,
+    total_referrals: (upline.total_referrals || 0) + 1,
+  })
+  .eq("id", upline.id);
+    setStatus("success");
     router.push("/dashboard");
   }
 

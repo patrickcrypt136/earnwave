@@ -216,9 +216,9 @@ export default function Home() {
           style={{ background: "linear-gradient(135deg, #f97316, #eab308)" }}>
           Join EarnWave →
         </Link>
-      </section>
+</section>
 
-      {/* Footer */}
+{/* Footer */}
       <footer className="px-6 py-8 text-center text-xs"
         style={{ borderTop: "1px solid #2a2a2a", color: "#444" }}>
         © 2024 EarnWave. All Rights Reserved.

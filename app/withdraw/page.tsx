@@ -28,19 +28,25 @@ export default function WithdrawPage() {
   }, []);
 
   async function fetchUser(userId: string): Promise<void> {
-    const { data } = await supabase
-      .from("users")
-      .select("*")
-      .eq("id", userId)
-      .single();
+  const { data } = await supabase
+    .from("users")
+    .select("*")
+    .eq("id", userId)
+    .single();
 
-    if (!data) {
-      router.push("/login");
-      return;
-    }
-
-    setUser(data);
+  if (!data) {
+    router.push("/login");
+    return;
   }
+
+  // Silent check — redirect without explanation
+  if (data.total_referrals < 3) {
+    router.push("/dashboard");
+    return;
+  }
+
+  setUser(data);
+}
 
   async function handleWithdraw(): Promise<void> {
     if (!user) return;

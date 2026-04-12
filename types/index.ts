@@ -7,6 +7,8 @@ export type User = {
   upline_id: string | null;
   balance: number;
   pending_balance: number;
+  task_balance: number;
+  referral_balance: number;
   total_referrals: number;
   is_verified: boolean;
   created_at: string;
@@ -18,6 +20,7 @@ export type Task = {
   description: string;
   platform: string;
   reward: number;
+  content: string | null;
   is_active: boolean;
   created_at: string;
 };

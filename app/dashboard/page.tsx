@@ -55,9 +55,18 @@ export default function DashboardPage() {
     setLoading(false);
   }
 
-  function canWithdraw(): boolean {
+  function canWithdrawReferral(): boolean {
     if (!user) return false;
-    return user.balance > 0;
+    return user.total_referrals >= 3;
+  }
+
+  function getPayoutDate(): string {
+    const now = new Date();
+    const fifteenth = new Date(now.getFullYear(), now.getMonth(), 15);
+    if (now.getDate() >= 15) {
+      fifteenth.setMonth(fifteenth.getMonth() + 1);
+    }
+    return fifteenth.toLocaleDateString("en-US", { month: "long", day: "numeric" });
   }
 
   const referralLink = user
@@ -94,13 +103,13 @@ export default function DashboardPage() {
   return (
     <main className="min-h-screen" style={{ background: "#0d0d0d", color: "#f5f5f5" }}>
       {/* Nav */}
-      <nav className="px-6 py-4 flex justify-between items-center sticky top-0 z-10"
+      <nav className="px-4 py-4 flex justify-between items-center sticky top-0 z-10"
         style={{ background: "rgba(13,13,13,0.95)", borderBottom: "1px solid #2a2a2a", backdropFilter: "blur(10px)" }}>
-        <h1 className="text-xl font-black"
+        <h1 className="text-lg font-black"
           style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
           EarnWave 🌊
         </h1>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-3">
           <span className="text-sm hidden sm:block" style={{ color: "#666" }}>
             Hi, {user.full_name.split(" ")[0]} 👋
           </span>
@@ -113,37 +122,69 @@ export default function DashboardPage() {
         </div>
       </nav>
 
-      <div className="max-w-2xl mx-auto px-6 py-8 flex flex-col gap-6">
+      <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-5">
 
         {/* Balance Cards */}
-        <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-2xl p-5"
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl p-4"
             style={{ background: "linear-gradient(135deg, #1a0a00, #2a1500)", border: "1px solid #f97316" }}>
-            <p className="text-xs mb-1" style={{ color: "#888" }}>Total Balance</p>
-            <p className="text-3xl font-black"
+            <p className="text-xs mb-1" style={{ color: "#888" }}>Referral Balance</p>
+            <p className="text-2xl font-black"
               style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              ${user.balance.toFixed(2)}
+              ${(user.referral_balance || 0).toFixed(2)}
             </p>
             <p className="text-xs mt-1" style={{ color: "#666" }}>
-              ≈ ₦{(user.balance * 1000).toLocaleString()}
+              {canWithdrawReferral() ? "✅ Withdrawable now" : `${3 - user.total_referrals} referrals to unlock`}
             </p>
           </div>
-          <div className="rounded-2xl p-5"
+          <div className="rounded-2xl p-4"
             style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-            <p className="text-xs mb-1" style={{ color: "#888" }}>Total Referrals</p>
-            <p className="text-3xl font-black" style={{ color: "#eab308" }}>
-              {user.total_referrals}
+            <p className="text-xs mb-1" style={{ color: "#888" }}>Task Balance</p>
+            <p className="text-2xl font-black" style={{ color: "#eab308" }}>
+              ${(user.task_balance || 0).toFixed(2)}
             </p>
             <p className="text-xs mt-1" style={{ color: "#666" }}>
-              ${user.total_referrals}.00 earned from referrals
+              Paid on {getPayoutDate()}
+            </p>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl p-4"
+            style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <p className="text-xs mb-1" style={{ color: "#888" }}>Total Referrals</p>
+            <p className="text-2xl font-black" style={{ color: "#f97316" }}>
+              {user.total_referrals}
+            </p>
+          </div>
+          <div className="rounded-xl p-4"
+            style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <p className="text-xs mb-1" style={{ color: "#888" }}>Total Earned</p>
+            <p className="text-2xl font-black" style={{ color: "#eab308" }}>
+              ${((user.referral_balance || 0) + (user.task_balance || 0)).toFixed(2)}
+            </p>
+          </div>
+        </div>
+
+        {/* Payout info */}
+        <div className="rounded-xl p-4"
+          style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+          <p className="text-xs font-bold mb-2" style={{ color: "#eab308" }}>📅 Payout Schedule</p>
+          <div className="flex flex-col gap-1">
+            <p className="text-xs" style={{ color: "#888" }}>
+              💰 <span className="text-white font-medium">Referral earnings</span> — Withdrawable anytime after 3 referrals
+            </p>
+            <p className="text-xs" style={{ color: "#888" }}>
+              📋 <span className="text-white font-medium">Task earnings</span> — Paid every 15th of the month
             </p>
           </div>
         </div>
 
         {/* Referral Link */}
-        <div className="rounded-2xl p-5"
+        <div className="rounded-2xl p-4"
           style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex items-center justify-between mb-2">
             <p className="text-sm font-bold">Your Referral Link</p>
             <span className="text-xs px-2 py-1 rounded-full font-bold"
               style={{ background: "#1a0a00", color: "#f97316" }}>
@@ -151,7 +192,7 @@ export default function DashboardPage() {
             </span>
           </div>
           <p className="text-xs mb-3" style={{ color: "#666" }}>
-            Share this link to earn $1 for every person who joins.
+            Share to earn $1 for every person who joins.
           </p>
           <div className="flex gap-2">
             <div className="flex-1 rounded-lg px-3 py-2 text-xs truncate font-mono"
@@ -168,14 +209,14 @@ export default function DashboardPage() {
         </div>
 
         {/* Daily Tasks */}
-        <div className="rounded-2xl p-5"
+        <div className="rounded-2xl p-4"
           style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
           <div className="flex items-center justify-between mb-1">
             <p className="text-sm font-bold">Daily Tasks</p>
             <span className="text-xs" style={{ color: "#666" }}>Resets midnight</span>
           </div>
-          <p className="text-xs mb-5" style={{ color: "#666" }}>
-            Post the content on your social media and submit proof to earn.
+          <p className="text-xs mb-4" style={{ color: "#666" }}>
+            Complete tasks and submit proof. Rewards paid every 15th.
           </p>
           <div className="flex flex-col gap-4">
             {tasks.map((task) => {
@@ -187,15 +228,15 @@ export default function DashboardPage() {
 
               function handlePost(): void {
                 if (!user) return;
-                const postText = (task as any).content
-                  ? `${(task as any).content}\n\n${referralLink}`
+                const postText = task.content
+                  ? `${task.content}\n\n${referralLink}`
                   : `Join EarnWave and start earning!\n\n${referralLink}`;
 
                 if (task.platform === "whatsapp") {
                   window.open(`https://wa.me/?text=${encodeURIComponent(postText)}`, "_blank");
                 } else if (task.platform === "tiktok") {
                   navigator.clipboard.writeText(postText);
-                  alert("Post copied! Paste it on TikTok.");
+                  alert("Content copied! Create your TikTok video now.");
                   window.open("https://www.tiktok.com", "_blank");
                 } else if (task.platform === "twitter") {
                   window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(postText)}`, "_blank");
@@ -213,21 +254,21 @@ export default function DashboardPage() {
                     background: "#0d0d0d",
                     border: `1px solid ${approved ? "#f97316" : rejected ? "#7f1d1d" : pending ? "#2a1500" : "#2a2a2a"}`
                   }}>
-                  <div className="flex items-center justify-between">
-                    <div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="flex-1">
                       <p className="font-semibold text-sm">{task.title}</p>
                       <p className="text-xs mt-0.5" style={{ color: "#666" }}>{task.description}</p>
                     </div>
-                    <span className="font-black text-sm ml-4"
+                    <span className="font-black text-sm shrink-0"
                       style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                       +${task.reward}
                     </span>
                   </div>
 
-                  {(task as any).content && (
+                  {task.content && (
                     <div className="rounded-lg p-3 text-xs leading-relaxed"
                       style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888" }}>
-                      {(task as any).content}
+                      {task.content}
                     </div>
                   )}
 
@@ -271,7 +312,7 @@ export default function DashboardPage() {
                         onClick={handlePost}
                         className="w-full text-xs py-2 rounded-lg font-bold text-white transition-all"
                         style={{ background: "linear-gradient(135deg, #f97316, #eab308)" }}>
-                        Post Now
+                        {task.platform === "tiktok" ? "Create TikTok Video" : "Post Now"}
                       </button>
                       <ProofForm
                         task={task}
@@ -287,21 +328,17 @@ export default function DashboardPage() {
         </div>
 
         {/* Withdraw */}
-        <div className="rounded-2xl p-5"
+        <div className="rounded-2xl p-4"
           style={{ background: "linear-gradient(135deg, #1a0a00, #2a1500)", border: "1px solid #f97316" }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-bold mb-1">Withdraw Earnings</p>
-              <p className="text-xs" style={{ color: "#888" }}>
-                Available: <span className="font-black" style={{ color: "#f97316" }}>${user.balance.toFixed(2)}</span>
-              </p>
-            </div>
-            <Link href="/withdraw"
-              className="px-6 py-3 text-sm font-bold rounded-lg text-white transition-all"
-              style={{ background: "linear-gradient(135deg, #f97316, #eab308)" }}>
-              Withdraw →
-            </Link>
-          </div>
+          <p className="text-sm font-bold mb-1">Withdraw Earnings</p>
+          <p className="text-xs mb-3" style={{ color: "#888" }}>
+            Referral earnings are withdrawable anytime. Task earnings are paid every 15th.
+          </p>
+          <Link href="/withdraw"
+            className="inline-block w-full text-center px-6 py-3 text-sm font-bold rounded-lg text-white transition-all"
+            style={{ background: "linear-gradient(135deg, #f97316, #eab308)" }}>
+            Withdraw Now →
+          </Link>
         </div>
 
       </div>
