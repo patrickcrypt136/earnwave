@@ -101,13 +101,14 @@ export default function RegisterForm() {
       amount: 1.00,
     }]);
 
-   await supabase
-  .from("users")
-  .update({
-    referral_balance: (upline.referral_balance || 0) + 2,
-    total_referrals: (upline.total_referrals || 0) + 1,
-  })
-  .eq("id", upline.id);
+    await supabase
+      .from("users")
+      .update({
+        referral_balance: (upline.referral_balance || 0) + 1,
+        total_referrals: (upline.total_referrals || 0) + 1,
+      })
+      .eq("id", upline.id);
+
     setStatus("success");
     router.push("/dashboard");
   }
