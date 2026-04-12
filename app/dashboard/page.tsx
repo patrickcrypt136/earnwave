@@ -57,7 +57,7 @@ export default function DashboardPage() {
 
   function canWithdraw(): boolean {
     if (!user) return false;
-    return user.total_referrals >= 3;
+    return user.balance > 0;
   }
 
   const referralLink = user
@@ -77,8 +77,14 @@ export default function DashboardPage() {
   if (loading) {
     return (
       <main className="min-h-screen flex items-center justify-center"
-        style={{ background: "#0a0f1e" }}>
-        <p style={{ color: "#64748b" }}>Loading...</p>
+        style={{ background: "#0d0d0d" }}>
+        <div className="text-center">
+          <p className="text-2xl font-black mb-2"
+            style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            EarnWave 🌊
+          </p>
+          <p className="text-sm" style={{ color: "#666" }}>Loading your dashboard...</p>
+        </div>
       </main>
     );
   }
@@ -86,22 +92,22 @@ export default function DashboardPage() {
   if (!user) return null;
 
   return (
-    <main className="min-h-screen" style={{ background: "#0a0f1e", color: "#f0f4ff" }}>
+    <main className="min-h-screen" style={{ background: "#0d0d0d", color: "#f5f5f5" }}>
       {/* Nav */}
       <nav className="px-6 py-4 flex justify-between items-center sticky top-0 z-10"
-        style={{ background: "#0a0f1e", borderBottom: "1px solid #1e2d4a" }}>
+        style={{ background: "rgba(13,13,13,0.95)", borderBottom: "1px solid #2a2a2a", backdropFilter: "blur(10px)" }}>
         <h1 className="text-xl font-black"
-          style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+          style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
           EarnWave 🌊
         </h1>
         <div className="flex items-center gap-4">
-          <span className="text-sm" style={{ color: "#64748b" }}>
-            Hi, {user.full_name.split(" ")[0]}
+          <span className="text-sm hidden sm:block" style={{ color: "#666" }}>
+            Hi, {user.full_name.split(" ")[0]} 👋
           </span>
           <button
             onClick={handleLogout}
-            className="text-xs px-3 py-1 rounded-lg transition-all"
-            style={{ background: "#1e2d4a", color: "#94a3b8" }}>
+            className="text-xs px-3 py-2 rounded-lg transition-all"
+            style={{ background: "#1a1a1a", color: "#888", border: "1px solid #2a2a2a" }}>
             Logout
           </button>
         </div>
@@ -112,43 +118,50 @@ export default function DashboardPage() {
         {/* Balance Cards */}
         <div className="grid grid-cols-2 gap-4">
           <div className="rounded-2xl p-5"
-            style={{ background: "linear-gradient(135deg, #1e3a5f, #1e2d4a)", border: "1px solid #2d4a6a" }}>
-            <p className="text-xs mb-1" style={{ color: "#64748b" }}>Total Balance</p>
-            <p className="text-3xl font-black" style={{ color: "#60a5fa" }}>
+            style={{ background: "linear-gradient(135deg, #1a0a00, #2a1500)", border: "1px solid #f97316" }}>
+            <p className="text-xs mb-1" style={{ color: "#888" }}>Total Balance</p>
+            <p className="text-3xl font-black"
+              style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
               ${user.balance.toFixed(2)}
             </p>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>
+            <p className="text-xs mt-1" style={{ color: "#666" }}>
               ≈ ₦{(user.balance * 1000).toLocaleString()}
             </p>
           </div>
           <div className="rounded-2xl p-5"
-            style={{ background: "linear-gradient(135deg, #1a3a2a, #1e2d4a)", border: "1px solid #2d6a4a" }}>
-            <p className="text-xs mb-1" style={{ color: "#64748b" }}>Total Referrals</p>
-            <p className="text-3xl font-black" style={{ color: "#34d399" }}>
+            style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <p className="text-xs mb-1" style={{ color: "#888" }}>Total Referrals</p>
+            <p className="text-3xl font-black" style={{ color: "#eab308" }}>
               {user.total_referrals}
             </p>
-            <p className="text-xs mt-1" style={{ color: "#64748b" }}>
-              {user.total_referrals >= 3 ? "✅ Can withdraw" : `${3 - user.total_referrals} more to withdraw`}
+            <p className="text-xs mt-1" style={{ color: "#666" }}>
+              ${user.total_referrals}.00 earned from referrals
             </p>
           </div>
         </div>
 
         {/* Referral Link */}
         <div className="rounded-2xl p-5"
-          style={{ background: "#111827", border: "1px solid #1e2d4a" }}>
-          <p className="text-sm font-bold mb-3">Your Referral Link</p>
-          <p className="text-xs mb-3" style={{ color: "#64748b" }}>
-            Share this link to earn $1 for every person who signs up.
+          style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-bold">Your Referral Link</p>
+            <span className="text-xs px-2 py-1 rounded-full font-bold"
+              style={{ background: "#1a0a00", color: "#f97316" }}>
+              +$1 per signup
+            </span>
+          </div>
+          <p className="text-xs mb-3" style={{ color: "#666" }}>
+            Share this link to earn $1 for every person who joins.
           </p>
           <div className="flex gap-2">
-            <div className="flex-1 rounded-lg px-3 py-2 text-xs truncate"
-              style={{ background: "#0a0f1e", border: "1px solid #1e2d4a", color: "#60a5fa" }}>
+            <div className="flex-1 rounded-lg px-3 py-2 text-xs truncate font-mono"
+              style={{ background: "#0d0d0d", border: "1px solid #2a2a2a", color: "#f97316" }}>
               {referralLink}
             </div>
             <button
               onClick={copyReferralLink}
               className="px-4 py-2 rounded-lg text-xs font-bold text-white transition-all"
-              style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)" }}>
+              style={{ background: "linear-gradient(135deg, #f97316, #eab308)" }}>
               Copy
             </button>
           </div>
@@ -156,10 +169,13 @@ export default function DashboardPage() {
 
         {/* Daily Tasks */}
         <div className="rounded-2xl p-5"
-          style={{ background: "#111827", border: "1px solid #1e2d4a" }}>
-          <p className="text-sm font-bold mb-1">Daily Tasks</p>
-          <p className="text-xs mb-4" style={{ color: "#64748b" }}>
-            Post the content below on your social media and submit proof to earn rewards.
+          style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+          <div className="flex items-center justify-between mb-1">
+            <p className="text-sm font-bold">Daily Tasks</p>
+            <span className="text-xs" style={{ color: "#666" }}>Resets midnight</span>
+          </div>
+          <p className="text-xs mb-5" style={{ color: "#666" }}>
+            Post the content on your social media and submit proof to earn.
           </p>
           <div className="flex flex-col gap-4">
             {tasks.map((task) => {
@@ -171,8 +187,8 @@ export default function DashboardPage() {
 
               function handlePost(): void {
                 if (!user) return;
-                const postText = task.description
-                  ? `${task.description}\n\n${referralLink}`
+                const postText = (task as any).content
+                  ? `${(task as any).content}\n\n${referralLink}`
                   : `Join EarnWave and start earning!\n\n${referralLink}`;
 
                 if (task.platform === "whatsapp") {
@@ -193,34 +209,38 @@ export default function DashboardPage() {
               return (
                 <div key={task.id}
                   className="p-4 rounded-xl flex flex-col gap-3"
-                  style={{ background: "#0a0f1e", border: `1px solid ${approved ? "#065f46" : rejected ? "#7f1d1d" : pending ? "#1e3a5f" : "#1e2d4a"}` }}>
+                  style={{
+                    background: "#0d0d0d",
+                    border: `1px solid ${approved ? "#f97316" : rejected ? "#7f1d1d" : pending ? "#2a1500" : "#2a2a2a"}`
+                  }}>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-semibold text-sm">{task.title}</p>
-                      <p className="text-xs mt-0.5" style={{ color: "#64748b" }}>{task.description}</p>
+                      <p className="text-xs mt-0.5" style={{ color: "#666" }}>{task.description}</p>
                     </div>
-                    <span className="font-black text-sm ml-4" style={{ color: "#34d399" }}>
+                    <span className="font-black text-sm ml-4"
+                      style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
                       +${task.reward}
                     </span>
                   </div>
 
-                  {task.description && (
+                  {(task as any).content && (
                     <div className="rounded-lg p-3 text-xs leading-relaxed"
-                      style={{ background: "#111827", border: "1px solid #1e2d4a", color: "#94a3b8" }}>
-                      {task.description}
+                      style={{ background: "#1a1a1a", border: "1px solid #2a2a2a", color: "#888" }}>
+                      {(task as any).content}
                     </div>
                   )}
 
                   {approved && (
                     <span className="text-xs px-3 py-2 rounded-lg font-medium text-center"
-                      style={{ background: "#065f46", color: "#34d399" }}>
+                      style={{ background: "#1a0a00", color: "#f97316", border: "1px solid #f97316" }}>
                       ✓ Approved — Reward Added!
                     </span>
                   )}
 
                   {pending && (
                     <span className="text-xs px-3 py-2 rounded-lg font-medium text-center"
-                      style={{ background: "#1e3a5f", color: "#60a5fa" }}>
+                      style={{ background: "#2a1500", color: "#eab308" }}>
                       ⏳ Pending Review
                     </span>
                   )}
@@ -234,7 +254,7 @@ export default function DashboardPage() {
                       <button
                         onClick={handlePost}
                         className="w-full text-xs py-2 rounded-lg font-bold text-white transition-all"
-                        style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)" }}>
+                        style={{ background: "linear-gradient(135deg, #f97316, #eab308)" }}>
                         Post Again
                       </button>
                       <ProofForm
@@ -250,7 +270,7 @@ export default function DashboardPage() {
                       <button
                         onClick={handlePost}
                         className="w-full text-xs py-2 rounded-lg font-bold text-white transition-all"
-                        style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)" }}>
+                        style={{ background: "linear-gradient(135deg, #f97316, #eab308)" }}>
                         Post Now
                       </button>
                       <ProofForm
@@ -266,30 +286,22 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Withdraw Button */}
-        <div className="rounded-2xl p-5 text-center"
-          style={{ background: "#111827", border: "1px solid #1e2d4a" }}>
-          <p className="text-sm font-bold mb-1">Withdraw Earnings</p>
-          <p className="text-xs mb-4" style={{ color: "#64748b" }}>
-            {canWithdraw()
-              ? "You're eligible to withdraw your earnings!"
-              : `Refer ${3 - user.total_referrals} more people to unlock withdrawals.`}
-          </p>
-          {canWithdraw() ? (
-            <Link href="/withdraw"
-              className="inline-block px-8 py-3 text-sm font-bold rounded-lg text-white transition-all"
-              style={{ background: "linear-gradient(135deg, #3b82f6, #06b6d4)" }}>
-              Withdraw Now
-            </Link>
-          ) : (
-            <div className="w-full rounded-full h-2 mb-2" style={{ background: "#1e2d4a" }}>
-              <div className="h-2 rounded-full transition-all"
-                style={{
-                  background: "linear-gradient(135deg, #3b82f6, #06b6d4)",
-                  width: `${(user.total_referrals / 3) * 100}%`
-                }} />
+        {/* Withdraw */}
+        <div className="rounded-2xl p-5"
+          style={{ background: "linear-gradient(135deg, #1a0a00, #2a1500)", border: "1px solid #f97316" }}>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-bold mb-1">Withdraw Earnings</p>
+              <p className="text-xs" style={{ color: "#888" }}>
+                Available: <span className="font-black" style={{ color: "#f97316" }}>${user.balance.toFixed(2)}</span>
+              </p>
             </div>
-          )}
+            <Link href="/withdraw"
+              className="px-6 py-3 text-sm font-bold rounded-lg text-white transition-all"
+              style={{ background: "linear-gradient(135deg, #f97316, #eab308)" }}>
+              Withdraw →
+            </Link>
+          </div>
         </div>
 
       </div>
