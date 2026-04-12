@@ -2,16 +2,17 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
-import type { User, Task, TaskCompletion } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ProofForm from "../components/ProofForm";
+import type { User, Task, TaskCompletion, Withdrawal } from "@/types";
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [completions, setCompletions] = useState<TaskCompletion[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
+  const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const router = useRouter();
 
   useEffect(() => {
@@ -52,6 +53,13 @@ export default function DashboardPage() {
       .eq("date", today);
 
     setCompletions(completionsData || []);
+    const { data: withdrawalData } = await supabase
+  .from("withdrawals")
+  .select("*")
+  .eq("user_id", userId)
+  .order("created_at", { ascending: false });
+
+setWithdrawals(withdrawalData || []);
     setLoading(false);
   }
 
@@ -93,6 +101,44 @@ export default function DashboardPage() {
             EarnWave 🌊
           </p>
           <p className="text-sm" style={{ color: "#666" }}>Loading your dashboard...</p>
+          {/* Withdrawal History */}
+{withdrawals.length > 0 && (
+  <div className="rounded-2xl p-4"
+    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+    <div className="flex items-center justify-between mb-4">
+      <p className="text-sm font-bold">Withdrawal History</p>
+      <span className="text-xs font-black"
+        style={{ color: "#f97316" }}>
+        Total: ${withdrawals
+          .filter((w) => w.status === "paid")
+          .reduce((sum, w) => sum + w.amount, 0)
+          .toFixed(2)}
+      </span>
+    </div>
+    <div className="flex flex-col gap-2">
+      {withdrawals.map((w) => (
+        <div key={w.id}
+          className="flex items-center justify-between p-3 rounded-xl"
+          style={{ background: "#0d0d0d", border: "1px solid #2a2a2a" }}>
+          <div>
+            <p className="text-sm font-bold">${w.amount.toFixed(2)}</p>
+            <p className="text-xs" style={{ color: "#666" }}>
+              {new Date(w.created_at).toLocaleDateString("en-GB")}
+            </p>
+          </div>
+          <span className="text-xs font-bold px-3 py-1 rounded-full"
+            style={{
+              background: w.status === "paid" ? "#1a0a00" : w.status === "rejected" ? "#2a0000" : "#2a1500",
+              color: w.status === "paid" ? "#f97316" : w.status === "rejected" ? "#fca5a5" : "#eab308",
+              border: `1px solid ${w.status === "paid" ? "#f97316" : w.status === "rejected" ? "#ef4444" : "#eab308"}`,
+            }}>
+            {w.status}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
         </div>
       </main>
     );
