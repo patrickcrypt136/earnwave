@@ -203,14 +203,7 @@ setWithdrawals(withdrawalData || []);
     </p>
     <p className="text-xs mt-1" style={{ color: "#666" }}>Level 2 earnings</p>
   </div>
-  <div className="rounded-xl p-4"
-    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-    <p className="text-xs mb-1" style={{ color: "#888" }}>Total Referrals</p>
-    <p className="text-2xl font-black" style={{ color: "#eab308" }}>
-      {user.total_referrals}
-    </p>
-    <p className="text-xs mt-1" style={{ color: "#666" }}>People you referred</p>
-  </div>
+
 </div>
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">

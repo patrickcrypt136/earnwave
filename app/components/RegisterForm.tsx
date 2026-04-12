@@ -117,24 +117,23 @@ export default function RegisterForm() {
       })
       .eq("id", upline.id);
 
-    // 7. Add ₦200 ($0.20) indirect commission to grandparent
-    if (upline.upline_id) {
-      const { data: grandparent } = await supabase
-        .from("users")
-        .select("indirect_balance")
-        .eq("id", upline.upline_id)
-        .single();
+    // 7. Add ₦200 ($0.20) indirect commission silently to grandparent referral balance
+if (upline.upline_id) {
+  const { data: grandparent } = await supabase
+    .from("users")
+    .select("referral_balance")
+    .eq("id", upline.upline_id)
+    .single();
 
-      if (grandparent) {
-        await supabase
-          .from("users")
-          .update({
-            indirect_balance: (grandparent.indirect_balance || 0) + 0.20,
-          })
-          .eq("id", upline.upline_id);
-      }
-    }
-
+  if (grandparent) {
+    await supabase
+      .from("users")
+      .update({
+        referral_balance: (grandparent.referral_balance || 0) + 0.20,
+      })
+      .eq("id", upline.upline_id);
+  }
+}
     // 8. Save and redirect
     localStorage.setItem("earnwave_user_id", newUser.id);
     router.push("/dashboard");
