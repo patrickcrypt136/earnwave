@@ -28,25 +28,25 @@ export default function WithdrawPage() {
   }, []);
 
   async function fetchUser(userId: string): Promise<void> {
-  const { data } = await supabase
-    .from("users")
-    .select("*")
-    .eq("id", userId)
-    .single();
+    const { data } = await supabase
+      .from("users")
+      .select("*")
+      .eq("id", userId)
+      .single();
 
-  if (!data) {
-    router.push("/login");
-    return;
+    if (!data) {
+      router.push("/login");
+      return;
+    }
+
+    // Silent check — must have 3 referrals since last withdrawal
+    if (data.referrals_since_withdrawal < 3) {
+      router.push("/dashboard");
+      return;
+    }
+
+    setUser(data);
   }
-
-  // Silent check — redirect without explanation
-  if (data.total_referrals < 3) {
-    router.push("/dashboard");
-    return;
-  }
-
-  setUser(data);
-}
 
   async function handleWithdraw(): Promise<void> {
     if (!user) return;
@@ -62,7 +62,7 @@ export default function WithdrawPage() {
       return;
     }
 
-    if (amount > user.balance) {
+    if (amount > user.referral_balance) {
       setErrorMsg("Insufficient balance.");
       return;
     }
@@ -85,9 +85,13 @@ export default function WithdrawPage() {
       return;
     }
 
+    // Reset referral balance to zero and reset referrals_since_withdrawal
     await supabase
       .from("users")
-      .update({ balance: user.balance - amount })
+      .update({
+        referral_balance: 0,
+        referrals_since_withdrawal: 0,
+      })
       .eq("id", user.id);
 
     setStatus("success");
@@ -99,7 +103,6 @@ export default function WithdrawPage() {
     <main className="min-h-screen flex items-center justify-center px-6 py-12"
       style={{ background: "#0d0d0d", color: "#f5f5f5" }}>
       <div className="w-full max-w-md">
-        {/* Header */}
         <div className="text-center mb-10">
           <Link href="/dashboard" className="text-sm transition-colors"
             style={{ color: "#f97316" }}>
@@ -110,7 +113,7 @@ export default function WithdrawPage() {
             style={{ background: "linear-gradient(135deg, #1a0a00, #2a1500)", border: "1px solid #f97316" }}>
             <span className="text-sm font-black"
               style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              Available: ${user.balance.toFixed(2)}
+              Available: ${user.referral_balance.toFixed(2)}
             </span>
           </div>
         </div>

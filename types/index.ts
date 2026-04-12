@@ -11,6 +11,7 @@ export type User = {
   referral_balance: number;
   indirect_balance: number;
   total_referrals: number;
+  referrals_since_withdrawal: number;
   is_verified: boolean;
   created_at: string;
 };

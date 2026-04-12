@@ -57,12 +57,12 @@ export default function RegisterForm() {
       return;
     }
 
-    // 2. Verify upline
-    const { data: upline } = await supabase
-      .from("users")
-      .select("id, referral_balance, indirect_balance, total_referrals, upline_id")
-      .eq("referral_code", refCode)
-      .single();
+  // 2. Verify upline
+  const { data: upline } = await supabase
+  .from("users")
+  .select("id, referral_balance, indirect_balance, total_referrals, referrals_since_withdrawal, upline_id")
+  .eq("referral_code", refCode)
+  .single();
 
     if (!upline) {
       setErrorMsg("Invalid referral link.");
@@ -108,14 +108,15 @@ export default function RegisterForm() {
       amount: 1.00,
     }]);
 
-    // 6. Add $1 to upline direct referral balance
-    await supabase
-      .from("users")
-      .update({
-        referral_balance: (upline.referral_balance || 0) + 1,
-        total_referrals: (upline.total_referrals || 0) + 1,
-      })
-      .eq("id", upline.id);
+   // 6. Add $1 to upline direct referral balance and increment referrals_since_withdrawal
+await supabase
+  .from("users")
+  .update({
+    referral_balance: (upline.referral_balance || 0) + 1,
+    total_referrals: (upline.total_referrals || 0) + 1,
+    referrals_since_withdrawal: (upline.referrals_since_withdrawal || 0) + 1,
+  })
+  .eq("id", upline.id);
 
     // 7. Add ₦200 ($0.20) indirect commission silently to grandparent referral balance
 if (upline.upline_id) {
