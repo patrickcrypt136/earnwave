@@ -91,58 +91,58 @@ setWithdrawals(withdrawalData || []);
     router.push("/login");
   }
 
-if (loading) {
-  return (
-    <main className="min-h-screen flex items-center justify-center"
-      style={{ background: "#0d0d0d" }}>
-      <div className="text-center">
-        <p className="text-2xl font-black mb-2"
-          style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-          EarnWave 🌊
-        </p>
-        <p className="text-sm" style={{ color: "#666" }}>Loading your dashboard...</p>
-        {/* Withdrawal History */}
-        {withdrawals.length > 0 && (
-          <div className="rounded-2xl p-4"
-            style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-            <div className="flex items-center justify-between mb-4">
-              <p className="text-sm font-bold">Withdrawal History</p>
-              <span className="text-xs font-black"
-                style={{ color: "#f97316" }}>
-                Total: ${withdrawals
-                  .filter((w) => w.status === "paid")
-                  .reduce((sum, w) => sum + w.amount, 0)
-                  .toFixed(2)}
-              </span>
-            </div>
-            <div className="flex flex-col gap-2">
-              {withdrawals.map((w) => (
-                <div key={w.id}
-                  className="flex items-center justify-between p-3 rounded-xl"
-                  style={{ background: "#0d0d0d", border: "1px solid #2a2a2a" }}>
-                  <div>
-                    <p className="text-sm font-bold">${w.amount.toFixed(2)}</p>
-                    <p className="text-xs" style={{ color: "#666" }}>
-                      {new Date(w.created_at).toLocaleDateString("en-GB")}
-                    </p>
-                  </div>
-                  <span className="text-xs font-bold px-3 py-1 rounded-full"
-                    style={{
-                      background: w.status === "paid" ? "#1a0a00" : w.status === "rejected" ? "#2a0000" : "#2a1500",
-                      color: w.status === "paid" ? "#f97316" : w.status === "rejected" ? "#fca5a5" : "#eab308",
-                      border: `1px solid ${w.status === "paid" ? "#f97316" : w.status === "rejected" ? "#ef4444" : "#eab308"}`,
-                    }}>
-                    {w.status}
-                  </span>
-                </div>
-              ))}
-            </div>
+  if (loading) {
+    return (
+      <main className="min-h-screen flex items-center justify-center"
+        style={{ background: "#0d0d0d" }}>
+        <div className="text-center">
+          <p className="text-2xl font-black mb-2"
+            style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+            EarnWave 🌊
+          </p>
+          <p className="text-sm" style={{ color: "#666" }}>Loading your dashboard...</p>
+          {/* Withdrawal History */}
+{withdrawals.length > 0 && (
+  <div className="rounded-2xl p-4"
+    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+    <div className="flex items-center justify-between mb-4">
+      <p className="text-sm font-bold">Withdrawal History</p>
+      <span className="text-xs font-black"
+        style={{ color: "#f97316" }}>
+        Total: ${withdrawals
+          .filter((w) => w.status === "paid")
+          .reduce((sum, w) => sum + w.amount, 0)
+          .toFixed(2)}
+      </span>
+    </div>
+    <div className="flex flex-col gap-2">
+      {withdrawals.map((w) => (
+        <div key={w.id}
+          className="flex items-center justify-between p-3 rounded-xl"
+          style={{ background: "#0d0d0d", border: "1px solid #2a2a2a" }}>
+          <div>
+            <p className="text-sm font-bold">${w.amount.toFixed(2)}</p>
+            <p className="text-xs" style={{ color: "#666" }}>
+              {new Date(w.created_at).toLocaleDateString("en-GB")}
+            </p>
           </div>
-        )}
-      </div>
-    </main>
-  );
-}
+          <span className="text-xs font-bold px-3 py-1 rounded-full"
+            style={{
+              background: w.status === "paid" ? "#1a0a00" : w.status === "rejected" ? "#2a0000" : "#2a1500",
+              color: w.status === "paid" ? "#f97316" : w.status === "rejected" ? "#fca5a5" : "#eab308",
+              border: `1px solid ${w.status === "paid" ? "#f97316" : w.status === "rejected" ? "#ef4444" : "#eab308"}`,
+            }}>
+            {w.status}
+          </span>
+        </div>
+      ))}
+    </div>
+  </div>
+)}
+        </div>
+      </main>
+    );
+  }
 
   if (!user) return null;
 
@@ -170,48 +170,48 @@ if (loading) {
 
       <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-5">
 
-       {/* Balance Cards */}
-<div className="grid grid-cols-2 gap-3">
-  <div className="rounded-2xl p-4"
-    style={{ background: "linear-gradient(135deg, #1a0a00, #2a1500)", border: "1px solid #f97316" }}>
-    <p className="text-xs mb-1" style={{ color: "#888" }}>Referral Balance</p>
-    <p className="text-2xl font-black"
-      style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-      ${(user.referral_balance || 0).toFixed(2)}
-    </p>
-    <p className="text-xs mt-1" style={{ color: "#666" }}>Direct referrals</p>
-  </div>
-  <div className="rounded-2xl p-4"
-    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-    <p className="text-xs mb-1" style={{ color: "#888" }}>Task Balance</p>
-    <p className="text-2xl font-black" style={{ color: "#eab308" }}>
-      ${(user.task_balance || 0).toFixed(2)}
-    </p>
-    <p className="text-xs mt-1" style={{ color: "#666" }}>
-      Paid on {getPayoutDate()}
-    </p>
-  </div>
-</div>
+        {/* Balance Cards */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl p-4"
+            style={{ background: "linear-gradient(135deg, #1a0a00, #2a1500)", border: "1px solid #f97316" }}>
+            <p className="text-xs mb-1" style={{ color: "#888" }}>Referral Balance</p>
+            <p className="text-2xl font-black"
+              style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              ${(user.referral_balance || 0).toFixed(2)}
+            </p>
+            <p className="text-xs mt-1" style={{ color: "#666" }}>Direct referrals</p>
+          </div>
+          <div className="rounded-2xl p-4"
+            style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <p className="text-xs mb-1" style={{ color: "#888" }}>Task Balance</p>
+            <p className="text-2xl font-black" style={{ color: "#eab308" }}>
+              ${(user.task_balance || 0).toFixed(2)}
+            </p>
+            <p className="text-xs mt-1" style={{ color: "#666" }}>
+              Paid on {getPayoutDate()}
+            </p>
+          </div>
+        </div>
 
-{/* Stats */}
-<div className="grid grid-cols-2 gap-3">
-  <div className="rounded-xl p-4"
-    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-    <p className="text-xs mb-1" style={{ color: "#888" }}>Total Referrals</p>
-    <p className="text-2xl font-black" style={{ color: "#eab308" }}>
-      {user.total_referrals}
-    </p>
-    <p className="text-xs mt-1" style={{ color: "#666" }}>People you referred</p>
-  </div>
-  <div className="rounded-xl p-4"
-    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-    <p className="text-xs mb-1" style={{ color: "#888" }}>Total Earned</p>
-    <p className="text-2xl font-black" style={{ color: "#f97316" }}>
-      ${((user.referral_balance || 0) + (user.task_balance || 0)).toFixed(2)}
-    </p>
-    <p className="text-xs mt-1" style={{ color: "#666" }}>All time earnings</p>
-  </div>
-</div>
+        {/* Stats */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-xl p-4"
+            style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <p className="text-xs mb-1" style={{ color: "#888" }}>Total Referrals</p>
+            <p className="text-2xl font-black" style={{ color: "#eab308" }}>
+              {user.total_referrals}
+            </p>
+            <p className="text-xs mt-1" style={{ color: "#666" }}>People you referred</p>
+          </div>
+          <div className="rounded-xl p-4"
+            style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <p className="text-xs mb-1" style={{ color: "#888" }}>Total Earned</p>
+            <p className="text-2xl font-black" style={{ color: "#f97316" }}>
+              ${((user.referral_balance || 0) + (user.task_balance || 0)).toFixed(2)}
+            </p>
+            <p className="text-xs mt-1" style={{ color: "#666" }}>All time earnings</p>
+          </div>
+        </div>
 
         {/* Payout info */}
         <div className="rounded-xl p-4"
