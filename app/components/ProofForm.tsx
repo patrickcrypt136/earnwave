@@ -7,7 +7,6 @@ import type { Task } from "@/types";
 type Props = {
   task: Task;
   userId: string;
-  referralLink: string;
   onSubmit: () => void;
 };
 
