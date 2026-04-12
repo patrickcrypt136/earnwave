@@ -43,6 +43,7 @@ export default function RegisterForm() {
     setStatus("loading");
     setErrorMsg("");
 
+    // 1. Verify coupon
     const { data: coupon } = await supabase
       .from("coupons")
       .select("*")
@@ -56,9 +57,10 @@ export default function RegisterForm() {
       return;
     }
 
+    // 2. Verify upline
     const { data: upline } = await supabase
       .from("users")
-      .select("id, balance, total_referrals, referral_balance")
+      .select("id, referral_balance, indirect_balance, total_referrals, upline_id")
       .eq("referral_code", refCode)
       .single();
 
@@ -68,21 +70,24 @@ export default function RegisterForm() {
       return;
     }
 
+    // 3. Create new user
     const newReferralCode = generateReferralCode(form.full_name);
 
     const { data: newUser, error } = await supabase
-  .from("users")
-  .insert([{
-    full_name: form.full_name,
-    email: form.email.toLowerCase(),
-    phone: form.phone,
-    referral_code: newReferralCode,
-    upline_id: upline.id,
-    balance: 0,
-    referral_balance: 3.00,
-  }])
-  .select()
-  .single();
+      .from("users")
+      .insert([{
+        full_name: form.full_name,
+        email: form.email.toLowerCase(),
+        phone: form.phone,
+        referral_code: newReferralCode,
+        upline_id: upline.id,
+        balance: 0,
+        referral_balance: 3.00,
+        task_balance: 0,
+        indirect_balance: 0,
+      }])
+      .select()
+      .single();
 
     if (error) {
       setErrorMsg(error.message.includes("unique") ? "Email already registered." : "Something went wrong.");
@@ -90,17 +95,20 @@ export default function RegisterForm() {
       return;
     }
 
+    // 4. Mark coupon used
     await supabase
       .from("coupons")
       .update({ is_used: true, used_by: newUser.id })
       .eq("id", coupon.id);
 
+    // 5. Create referral record
     await supabase.from("referrals").insert([{
       upline_id: upline.id,
       downline_id: newUser.id,
       amount: 1.00,
     }]);
 
+    // 6. Add $1 to upline direct referral balance
     await supabase
       .from("users")
       .update({
@@ -109,7 +117,26 @@ export default function RegisterForm() {
       })
       .eq("id", upline.id);
 
-    setStatus("success");
+    // 7. Add ₦200 ($0.20) indirect commission to grandparent
+    if (upline.upline_id) {
+      const { data: grandparent } = await supabase
+        .from("users")
+        .select("indirect_balance")
+        .eq("id", upline.upline_id)
+        .single();
+
+      if (grandparent) {
+        await supabase
+          .from("users")
+          .update({
+            indirect_balance: (grandparent.indirect_balance || 0) + 0.20,
+          })
+          .eq("id", upline.upline_id);
+      }
+    }
+
+    // 8. Save and redirect
+    localStorage.setItem("earnwave_user_id", newUser.id);
     router.push("/dashboard");
   }
 
@@ -117,7 +144,6 @@ export default function RegisterForm() {
     <main className="min-h-screen flex items-center justify-center px-6 py-12"
       style={{ background: "#0d0d0d", color: "#f5f5f5" }}>
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-10">
           <Link href="/">
             <h1 className="text-4xl font-black mb-2 cursor-pointer"

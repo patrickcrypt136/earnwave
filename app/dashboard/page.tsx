@@ -124,31 +124,48 @@ export default function DashboardPage() {
 
       <div className="max-w-2xl mx-auto px-4 py-6 flex flex-col gap-5">
 
-        {/* Balance Cards */}
-        <div className="grid grid-cols-2 gap-3">
-          <div className="rounded-2xl p-4"
-            style={{ background: "linear-gradient(135deg, #1a0a00, #2a1500)", border: "1px solid #f97316" }}>
-            <p className="text-xs mb-1" style={{ color: "#888" }}>Referral Balance</p>
-            <p className="text-2xl font-black"
-              style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-              ${(user.referral_balance || 0).toFixed(2)}
-            </p>
-            <p className="text-xs mt-1" style={{ color: "#666" }}>
-              {canWithdrawReferral() ? "✅ Withdrawable now" : `${3 - user.total_referrals} referrals to unlock`}
-            </p>
-          </div>
-          <div className="rounded-2xl p-4"
-            style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-            <p className="text-xs mb-1" style={{ color: "#888" }}>Task Balance</p>
-            <p className="text-2xl font-black" style={{ color: "#eab308" }}>
-              ${(user.task_balance || 0).toFixed(2)}
-            </p>
-            <p className="text-xs mt-1" style={{ color: "#666" }}>
-              Paid on {getPayoutDate()}
-            </p>
-          </div>
-        </div>
+       {/* Balance Cards */}
+<div className="grid grid-cols-2 gap-3">
+  <div className="rounded-2xl p-4"
+    style={{ background: "linear-gradient(135deg, #1a0a00, #2a1500)", border: "1px solid #f97316" }}>
+    <p className="text-xs mb-1" style={{ color: "#888" }}>Referral Balance</p>
+    <p className="text-2xl font-black"
+      style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+      ${(user.referral_balance || 0).toFixed(2)}
+    </p>
+    <p className="text-xs mt-1" style={{ color: "#666" }}>Direct referrals</p>
+  </div>
+  <div className="rounded-2xl p-4"
+    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+    <p className="text-xs mb-1" style={{ color: "#888" }}>Task Balance</p>
+    <p className="text-2xl font-black" style={{ color: "#eab308" }}>
+      ${(user.task_balance || 0).toFixed(2)}
+    </p>
+    <p className="text-xs mt-1" style={{ color: "#666" }}>
+      Paid on {getPayoutDate()}
+    </p>
+  </div>
+</div>
 
+{/* Indirect + Stats */}
+<div className="grid grid-cols-2 gap-3">
+  <div className="rounded-xl p-4"
+    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+    <p className="text-xs mb-1" style={{ color: "#888" }}>Indirect Commission</p>
+    <p className="text-2xl font-black" style={{ color: "#f97316" }}>
+      ₦{((user.indirect_balance || 0) * 1000).toLocaleString()}
+    </p>
+    <p className="text-xs mt-1" style={{ color: "#666" }}>Level 2 earnings</p>
+  </div>
+  <div className="rounded-xl p-4"
+    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+    <p className="text-xs mb-1" style={{ color: "#888" }}>Total Referrals</p>
+    <p className="text-2xl font-black" style={{ color: "#eab308" }}>
+      {user.total_referrals}
+    </p>
+    <p className="text-xs mt-1" style={{ color: "#666" }}>People you referred</p>
+  </div>
+</div>
         {/* Stats */}
         <div className="grid grid-cols-2 gap-3">
           <div className="rounded-xl p-4"

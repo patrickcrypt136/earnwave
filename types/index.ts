@@ -9,6 +9,7 @@ export type User = {
   pending_balance: number;
   task_balance: number;
   referral_balance: number;
+  indirect_balance: number;
   total_referrals: number;
   is_verified: boolean;
   created_at: string;
