@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata = {
-  title: "Kelvin Tech Hub",
-  description: "We build modern web apps and solutions",
+  title: "Earnwave",
+  description: "Earnwave is a platform that allows users to earn rewards by completing tasks and participating in activities.",
 };
 
 export default function RootLayout({
