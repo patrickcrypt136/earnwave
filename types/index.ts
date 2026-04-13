@@ -7,7 +7,7 @@ export type User = {
   upline_id: string | null;
   balance: number;
   pending_balance: number;
-  task_balance: number;
+  points: number;
   referral_balance: number;
   indirect_balance: number;
   total_referrals: number;
@@ -62,4 +62,11 @@ export type Coupon = {
   is_used: boolean;
   used_by: string | null;
   created_at: string;
+};
+
+export type Setting = {
+  id: string;
+  key: string;
+  value: string;
+  updated_at: string;
 };

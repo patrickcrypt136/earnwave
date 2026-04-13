@@ -7,23 +7,27 @@ import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [email, setEmail] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string>("");
   const router = useRouter();
 
   async function handleLogin(): Promise<void> {
-    if (!email) return;
+    if (!email || !password) {
+      setErrorMsg("Email and password are required.");
+      return;
+    }
     setStatus("loading");
     setErrorMsg("");
 
-    const { data: user, error } = await supabase
+    const { data: user } = await supabase
       .from("users")
-      .select("id")
+      .select("id, password")
       .eq("email", email.toLowerCase())
       .single();
 
-    if (!user) {
-      setErrorMsg("No account found with that email.");
+    if (!user || user.password !== password) {
+      setErrorMsg("Invalid email or password.");
       setStatus("error");
       return;
     }
@@ -36,7 +40,6 @@ export default function LoginPage() {
     <main className="min-h-screen flex items-center justify-center px-6"
       style={{ background: "#0d0d0d", color: "#f5f5f5" }}>
       <div className="w-full max-w-md">
-        {/* Logo */}
         <div className="text-center mb-10">
           <Link href="/">
             <h1 className="text-4xl font-black mb-2 cursor-pointer"
@@ -64,9 +67,22 @@ export default function LoginPage() {
             />
           </div>
 
-          {errorMsg && (
-            <p className="text-red-400 text-sm">{errorMsg}</p>
-          )}
+          <div>
+            <label className="text-xs uppercase tracking-widest mb-2 block" style={{ color: "#666" }}>
+              Password
+            </label>
+            <input
+              type="password"
+              placeholder="Enter your password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              onKeyDown={(e) => e.key === "Enter" && handleLogin()}
+              className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
+              style={{ background: "#0d0d0d", border: "1px solid #2a2a2a", color: "#f5f5f5" }}
+            />
+          </div>
+
+          {errorMsg && <p className="text-red-400 text-sm">{errorMsg}</p>}
 
           <button
             onClick={handleLogin}

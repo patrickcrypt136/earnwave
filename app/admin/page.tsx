@@ -49,12 +49,14 @@ const ADMIN_PASSWORD = "earnwave2024";
 export default function AdminPage() {
   const [authed, setAuthed] = useState<boolean>(false);
   const [password, setPassword] = useState<string>("");
-  const [tab, setTab] = useState<"submissions" | "withdrawals" | "coupons">("submissions");
+  const [tab, setTab] = useState<"submissions" | "withdrawals" | "coupons" | "settings">("submissions");
   const [submissions, setSubmissions] = useState<Submission[]>([]);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
   const [newCoupon, setNewCoupon] = useState<string>("");
   const [loading, setLoading] = useState<boolean>(false);
+  const [payoutDate, setPayoutDate] = useState<string>("");
+  const [newPayoutDate, setNewPayoutDate] = useState<string>("");
 
   function handleLogin(): void {
     if (password === ADMIN_PASSWORD) {
@@ -83,9 +85,17 @@ export default function AdminPage() {
       .select("*")
       .order("created_at", { ascending: false });
     setCoupons(couponData || []);
+
+    const { data: settingData } = await supabase
+  .from("settings")
+  .select("value")
+  .eq("key", "payout_date")
+  .single();
+
+if (settingData) setPayoutDate(settingData.value);
   }
 
-  async function handleApproveSubmission(sub: Submission): Promise<void> {
+ async function handleApproveSubmission(sub: Submission): Promise<void> {
   setLoading(true);
   await supabase
     .from("task_completions")
@@ -94,13 +104,13 @@ export default function AdminPage() {
 
   const { data: user } = await supabase
     .from("users")
-    .select("task_balance")
+    .select("points")
     .eq("id", sub.user_id)
     .single();
 
   await supabase
     .from("users")
-    .update({ task_balance: (user?.task_balance || 0) + sub.tasks.reward })
+    .update({ points: (user?.points || 0) + sub.tasks.reward })
     .eq("id", sub.user_id);
 
   fetchAll();
@@ -164,6 +174,18 @@ export default function AdminPage() {
     await supabase.from("coupons").delete().eq("id", id);
     fetchAll();
   }
+  async function handleUpdatePayoutDate(): Promise<void> {
+  if (!newPayoutDate) return;
+  setLoading(true);
+  await supabase
+    .from("settings")
+    .update({ value: newPayoutDate, updated_at: new Date().toISOString() })
+    .eq("key", "payout_date");
+  setPayoutDate(newPayoutDate);
+  setNewPayoutDate("");
+  setLoading(false);
+  alert("Payout date updated!");
+}
 
   const pendingSubmissions = submissions.filter((s) => s.status === "pending");
   const reviewedSubmissions = submissions.filter((s) => s.status !== "pending");
@@ -216,8 +238,8 @@ export default function AdminPage() {
           style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
           EarnWave Admin 🌊
         </h1>
-        <div className="flex gap-2">
-          {(["submissions", "withdrawals", "coupons"] as const).map((t) => (
+        <div className="flex gap-2 flex-wrap">
+  {(["submissions", "withdrawals", "coupons", "settings"] as const).map((t) => (
             <button
               key={t}
               onClick={() => setTab(t)}
@@ -442,7 +464,6 @@ export default function AdminPage() {
                 </div>
               </div>
             </div>
-
             <div>
               <h2 className="text-lg font-black mb-4">
                 Available Coupons
@@ -470,9 +491,8 @@ export default function AdminPage() {
                   </div>
                 ))}
               </div>
-            </div>
-
-            <div>
+</div>
+<div>
               <h2 className="text-lg font-black mb-4">
                 Used Coupons
                 <span className="ml-2 text-sm font-normal" style={{ color: "#666" }}>
@@ -489,6 +509,42 @@ export default function AdminPage() {
                     <span className="text-xs" style={{ color: "#444" }}>Used</span>
                   </div>
                 ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Settings Tab */}
+        {tab === "settings" && (
+          <div className="flex flex-col gap-6">
+            <div>
+              <h2 className="text-lg font-black mb-4">Payout Date</h2>
+              <div className="rounded-2xl p-5"
+                style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+                <p className="text-xs mb-2" style={{ color: "#666" }}>
+                  Current payout date: <span className="font-bold" style={{ color: "#f97316" }}>
+                    {payoutDate ? new Date(payoutDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" }) : "Not set"}
+                  </span>
+                </p>
+                <p className="text-xs mb-4" style={{ color: "#666" }}>
+                  Change the date when task points will be paid out to users. After payout, all user points reset to zero.
+                </p>
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    value={newPayoutDate}
+                    onChange={(e) => setNewPayoutDate(e.target.value)}
+                    className="flex-1 rounded-lg px-4 py-3 text-sm focus:outline-none"
+                    style={{ background: "#0d0d0d", border: "1px solid #2a2a2a", color: "#f5f5f5" }}
+                  />
+                  <button
+                    onClick={handleUpdatePayoutDate}
+                    disabled={loading || !newPayoutDate}
+                    className="px-6 py-3 text-sm font-bold rounded-lg text-white disabled:opacity-50"
+                    style={{ background: "linear-gradient(135deg, #f97316, #eab308)" }}>
+                    Update
+                  </button>
+                </div>
               </div>
             </div>
           </div>

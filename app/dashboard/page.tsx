@@ -2,17 +2,19 @@
 
 import { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabase";
+import type { User, Task, TaskCompletion, Withdrawal } from "@/types";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import ProofForm from "../components/ProofForm";
-import type { User, Task, TaskCompletion, Withdrawal } from "@/types";
 
 export default function DashboardPage() {
   const [user, setUser] = useState<User | null>(null);
   const [tasks, setTasks] = useState<Task[]>([]);
   const [completions, setCompletions] = useState<TaskCompletion[]>([]);
-  const [loading, setLoading] = useState<boolean>(true);
   const [withdrawals, setWithdrawals] = useState<Withdrawal[]>([]);
+  const [payoutDate, setPayoutDate] = useState<string>("");
+  const [countdown, setCountdown] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(true);
   const router = useRouter();
 
   useEffect(() => {
@@ -23,6 +25,30 @@ export default function DashboardPage() {
     }
     fetchData(userId);
   }, []);
+
+  useEffect(() => {
+    if (!payoutDate) return;
+    const interval = setInterval(() => {
+      setCountdown(getCountdown(payoutDate));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [payoutDate]);
+
+  function getCountdown(dateStr: string): string {
+    const now = new Date();
+    const target = new Date(dateStr);
+    target.setHours(23, 59, 59, 999);
+    const diff = target.getTime() - now.getTime();
+
+    if (diff <= 0) return "Payout processing...";
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+    const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+
+    return `${days}d ${hours}h ${minutes}m ${seconds}s`;
+  }
 
   async function fetchData(userId: string): Promise<void> {
     const { data: userData } = await supabase
@@ -53,28 +79,27 @@ export default function DashboardPage() {
       .eq("date", today);
 
     setCompletions(completionsData || []);
+
     const { data: withdrawalData } = await supabase
-  .from("withdrawals")
-  .select("*")
-  .eq("user_id", userId)
-  .order("created_at", { ascending: false });
+      .from("withdrawals")
+      .select("*")
+      .eq("user_id", userId)
+      .order("created_at", { ascending: false });
 
-setWithdrawals(withdrawalData || []);
-    setLoading(false);
-  }
+    setWithdrawals(withdrawalData || []);
 
-  function canWithdrawReferral(): boolean {
-    if (!user) return false;
-    return user.total_referrals >= 3;
-  }
+    const { data: settingData } = await supabase
+      .from("settings")
+      .select("value")
+      .eq("key", "payout_date")
+      .single();
 
-  function getPayoutDate(): string {
-    const now = new Date();
-    const fifteenth = new Date(now.getFullYear(), now.getMonth(), 15);
-    if (now.getDate() >= 15) {
-      fifteenth.setMonth(fifteenth.getMonth() + 1);
+    if (settingData) {
+      setPayoutDate(settingData.value);
+      setCountdown(getCountdown(settingData.value));
     }
-    return fifteenth.toLocaleDateString("en-US", { month: "long", day: "numeric" });
+
+    setLoading(false);
   }
 
   const referralLink = user
@@ -101,44 +126,6 @@ setWithdrawals(withdrawalData || []);
             EarnWave 🌊
           </p>
           <p className="text-sm" style={{ color: "#666" }}>Loading your dashboard...</p>
-          {/* Withdrawal History */}
-{withdrawals.length > 0 && (
-  <div className="rounded-2xl p-4"
-    style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-    <div className="flex items-center justify-between mb-4">
-      <p className="text-sm font-bold">Withdrawal History</p>
-      <span className="text-xs font-black"
-        style={{ color: "#f97316" }}>
-        Total: ${withdrawals
-          .filter((w) => w.status === "paid")
-          .reduce((sum, w) => sum + w.amount, 0)
-          .toFixed(2)}
-      </span>
-    </div>
-    <div className="flex flex-col gap-2">
-      {withdrawals.map((w) => (
-        <div key={w.id}
-          className="flex items-center justify-between p-3 rounded-xl"
-          style={{ background: "#0d0d0d", border: "1px solid #2a2a2a" }}>
-          <div>
-            <p className="text-sm font-bold">${w.amount.toFixed(2)}</p>
-            <p className="text-xs" style={{ color: "#666" }}>
-              {new Date(w.created_at).toLocaleDateString("en-GB")}
-            </p>
-          </div>
-          <span className="text-xs font-bold px-3 py-1 rounded-full"
-            style={{
-              background: w.status === "paid" ? "#1a0a00" : w.status === "rejected" ? "#2a0000" : "#2a1500",
-              color: w.status === "paid" ? "#f97316" : w.status === "rejected" ? "#fca5a5" : "#eab308",
-              border: `1px solid ${w.status === "paid" ? "#f97316" : w.status === "rejected" ? "#ef4444" : "#eab308"}`,
-            }}>
-            {w.status}
-          </span>
-        </div>
-      ))}
-    </div>
-  </div>
-)}
         </div>
       </main>
     );
@@ -183,13 +170,11 @@ setWithdrawals(withdrawalData || []);
           </div>
           <div className="rounded-2xl p-4"
             style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
-            <p className="text-xs mb-1" style={{ color: "#888" }}>Task Balance</p>
+            <p className="text-xs mb-1" style={{ color: "#888" }}>Task Points</p>
             <p className="text-2xl font-black" style={{ color: "#eab308" }}>
-              ${(user.task_balance || 0).toFixed(2)}
+              {(user.points || 0).toFixed(2)} pts
             </p>
-            <p className="text-xs mt-1" style={{ color: "#666" }}>
-              Paid on {getPayoutDate()}
-            </p>
+            <p className="text-xs mt-1" style={{ color: "#666" }}>Paid at month end</p>
           </div>
         </div>
 
@@ -207,22 +192,50 @@ setWithdrawals(withdrawalData || []);
             style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
             <p className="text-xs mb-1" style={{ color: "#888" }}>Total Earned</p>
             <p className="text-2xl font-black" style={{ color: "#f97316" }}>
-              ${((user.referral_balance || 0) + (user.task_balance || 0)).toFixed(2)}
+              ${(user.referral_balance || 0).toFixed(2)}
             </p>
-            <p className="text-xs mt-1" style={{ color: "#666" }}>All time earnings</p>
+            <p className="text-xs mt-1" style={{ color: "#666" }}>Referral earnings</p>
           </div>
         </div>
 
-        {/* Payout info */}
+        {/* Points Countdown */}
+        <div className="rounded-2xl p-4"
+          style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-bold">Points Payout Countdown</p>
+            <span className="text-xs px-2 py-1 rounded-full"
+              style={{ background: "#1a0a00", color: "#f97316", border: "1px solid #f97316" }}>
+              {(user.points || 0).toFixed(2)} pts
+            </span>
+          </div>
+          <div className="rounded-xl p-4 text-center"
+            style={{ background: "#0d0d0d", border: "1px solid #2a2a2a" }}>
+            <p className="text-xs mb-2" style={{ color: "#666" }}>Next payout in</p>
+            <p className="text-2xl font-black font-mono"
+              style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
+              {countdown || "Loading..."}
+            </p>
+            {payoutDate && (
+              <p className="text-xs mt-2" style={{ color: "#444" }}>
+                Payout date: {new Date(payoutDate).toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" })}
+              </p>
+            )}
+          </div>
+          <p className="text-xs mt-3" style={{ color: "#666" }}>
+            Your points will be converted to cash and paid to your account on the payout date.
+          </p>
+        </div>
+
+        {/* Payout schedule info */}
         <div className="rounded-xl p-4"
           style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
           <p className="text-xs font-bold mb-2" style={{ color: "#eab308" }}>📅 Payout Schedule</p>
           <div className="flex flex-col gap-1">
             <p className="text-xs" style={{ color: "#888" }}>
-              💰 <span className="text-white font-medium">Referral earnings</span> — Withdrawable anytime after 3 referrals
+              💰 <span className="text-white font-medium">Referral earnings</span> — Withdrawable anytime
             </p>
             <p className="text-xs" style={{ color: "#888" }}>
-              📋 <span className="text-white font-medium">Task earnings</span> — Paid every 15th of the month
+              🎯 <span className="text-white font-medium">Task points</span> — Paid automatically at month end
             </p>
           </div>
         </div>
@@ -262,7 +275,7 @@ setWithdrawals(withdrawalData || []);
             <span className="text-xs" style={{ color: "#666" }}>Resets midnight</span>
           </div>
           <p className="text-xs mb-4" style={{ color: "#666" }}>
-            Complete tasks and submit proof. Rewards paid every 15th.
+            Complete tasks and earn points. Points paid at month end.
           </p>
           <div className="flex flex-col gap-4">
             {tasks.map((task) => {
@@ -307,7 +320,7 @@ setWithdrawals(withdrawalData || []);
                     </div>
                     <span className="font-black text-sm shrink-0"
                       style={{ background: "linear-gradient(135deg, #f97316, #eab308)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>
-                      +${task.reward}
+                      +{task.reward} pts
                     </span>
                   </div>
 
@@ -321,7 +334,7 @@ setWithdrawals(withdrawalData || []);
                   {approved && (
                     <span className="text-xs px-3 py-2 rounded-lg font-medium text-center"
                       style={{ background: "#1a0a00", color: "#f97316", border: "1px solid #f97316" }}>
-                      ✓ Approved — Reward Added!
+                      ✓ Approved — Points Added!
                     </span>
                   )}
 
@@ -376,9 +389,9 @@ setWithdrawals(withdrawalData || []);
         {/* Withdraw */}
         <div className="rounded-2xl p-4"
           style={{ background: "linear-gradient(135deg, #1a0a00, #2a1500)", border: "1px solid #f97316" }}>
-          <p className="text-sm font-bold mb-1">Withdraw Earnings</p>
+          <p className="text-sm font-bold mb-1">Withdraw Referral Earnings</p>
           <p className="text-xs mb-3" style={{ color: "#888" }}>
-            Referral earnings are withdrawable anytime. Task earnings are paid every 15th.
+            Available: <span className="font-black" style={{ color: "#f97316" }}>${(user.referral_balance || 0).toFixed(2)}</span>
           </p>
           <Link href="/withdraw"
             className="inline-block w-full text-center px-6 py-3 text-sm font-bold rounded-lg text-white transition-all"
@@ -386,6 +399,44 @@ setWithdrawals(withdrawalData || []);
             Withdraw Now →
           </Link>
         </div>
+
+        {/* Withdrawal History */}
+        {withdrawals.length > 0 && (
+          <div className="rounded-2xl p-4"
+            style={{ background: "#1a1a1a", border: "1px solid #2a2a2a" }}>
+            <div className="flex items-center justify-between mb-4">
+              <p className="text-sm font-bold">Withdrawal History</p>
+              <span className="text-xs font-black" style={{ color: "#f97316" }}>
+                Total: ${withdrawals
+                  .filter((w) => w.status === "paid")
+                  .reduce((sum, w) => sum + w.amount, 0)
+                  .toFixed(2)}
+              </span>
+            </div>
+            <div className="flex flex-col gap-2">
+              {withdrawals.map((w) => (
+                <div key={w.id}
+                  className="flex items-center justify-between p-3 rounded-xl"
+                  style={{ background: "#0d0d0d", border: "1px solid #2a2a2a" }}>
+                  <div>
+                    <p className="text-sm font-bold">${w.amount.toFixed(2)}</p>
+                    <p className="text-xs" style={{ color: "#666" }}>
+                      {new Date(w.created_at).toLocaleDateString("en-GB")}
+                    </p>
+                  </div>
+                  <span className="text-xs font-bold px-3 py-1 rounded-full"
+                    style={{
+                      background: w.status === "paid" ? "#1a0a00" : w.status === "rejected" ? "#2a0000" : "#2a1500",
+                      color: w.status === "paid" ? "#f97316" : w.status === "rejected" ? "#fca5a5" : "#eab308",
+                      border: `1px solid ${w.status === "paid" ? "#f97316" : w.status === "rejected" ? "#ef4444" : "#eab308"}`,
+                    }}>
+                    {w.status}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
       </div>
     </main>

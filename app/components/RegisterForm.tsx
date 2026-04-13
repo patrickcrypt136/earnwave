@@ -16,6 +16,8 @@ export default function RegisterForm() {
     full_name: "",
     email: "",
     phone: "",
+    password: "",
+    confirm_password: "",
     coupon_code: "",
   });
   const [refCode, setRefCode] = useState<string>("");
@@ -30,8 +32,18 @@ export default function RegisterForm() {
   }, [searchParams]);
 
   async function handleRegister(): Promise<void> {
-    if (!form.full_name || !form.email || !form.phone || !form.coupon_code) {
+    if (!form.full_name || !form.email || !form.phone || !form.password || !form.coupon_code) {
       setErrorMsg("All fields are required.");
+      return;
+    }
+
+    if (form.password !== form.confirm_password) {
+      setErrorMsg("Passwords do not match.");
+      return;
+    }
+
+    if (form.password.length < 6) {
+      setErrorMsg("Password must be at least 6 characters.");
       return;
     }
 
@@ -57,12 +69,12 @@ export default function RegisterForm() {
       return;
     }
 
-  // 2. Verify upline
-  const { data: upline } = await supabase
-  .from("users")
-  .select("id, referral_balance, indirect_balance, total_referrals, referrals_since_withdrawal, upline_id")
-  .eq("referral_code", refCode)
-  .single();
+    // 2. Verify upline
+    const { data: upline } = await supabase
+      .from("users")
+      .select("id, referral_balance, indirect_balance, total_referrals, referrals_since_withdrawal, upline_id")
+      .eq("referral_code", refCode)
+      .single();
 
     if (!upline) {
       setErrorMsg("Invalid referral link.");
@@ -79,12 +91,14 @@ export default function RegisterForm() {
         full_name: form.full_name,
         email: form.email.toLowerCase(),
         phone: form.phone,
+        password: form.password,
         referral_code: newReferralCode,
         upline_id: upline.id,
         balance: 0,
         referral_balance: 3.00,
-        task_balance: 0,
+        points: 0,
         indirect_balance: 0,
+        referrals_since_withdrawal: 0,
       }])
       .select()
       .single();
@@ -108,34 +122,34 @@ export default function RegisterForm() {
       amount: 1.00,
     }]);
 
-   // 6. Add $1 to upline direct referral balance and increment referrals_since_withdrawal
-await supabase
-  .from("users")
-  .update({
-    referral_balance: (upline.referral_balance || 0) + 1,
-    total_referrals: (upline.total_referrals || 0) + 1,
-    referrals_since_withdrawal: (upline.referrals_since_withdrawal || 0) + 1,
-  })
-  .eq("id", upline.id);
-
-    // 7. Add ₦200 ($0.20) indirect commission silently to grandparent referral balance
-if (upline.upline_id) {
-  const { data: grandparent } = await supabase
-    .from("users")
-    .select("referral_balance")
-    .eq("id", upline.upline_id)
-    .single();
-
-  if (grandparent) {
+    // 6. Add $1 to upline
     await supabase
       .from("users")
       .update({
-        referral_balance: (grandparent.referral_balance || 0) + 0.20,
+        referral_balance: (upline.referral_balance || 0) + 1,
+        total_referrals: (upline.total_referrals || 0) + 1,
+        referrals_since_withdrawal: (upline.referrals_since_withdrawal || 0) + 1,
       })
-      .eq("id", upline.upline_id);
-  }
-}
-    // 8. Save and redirect
+      .eq("id", upline.id);
+
+    // 7. Add indirect commission silently to grandparent
+    if (upline.upline_id) {
+      const { data: grandparent } = await supabase
+        .from("users")
+        .select("referral_balance")
+        .eq("id", upline.upline_id)
+        .single();
+
+      if (grandparent) {
+        await supabase
+          .from("users")
+          .update({
+            referral_balance: (grandparent.referral_balance || 0) + 0.20,
+          })
+          .eq("id", upline.upline_id);
+      }
+    }
+
     localStorage.setItem("earnwave_user_id", newUser.id);
     router.push("/dashboard");
   }
@@ -200,6 +214,30 @@ if (upline.upline_id) {
               placeholder="08012345678"
               value={form.phone}
               onChange={(e) => setForm({ ...form, phone: e.target.value })}
+              className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
+              style={{ background: "#0d0d0d", border: "1px solid #2a2a2a", color: "#f5f5f5" }}
+            />
+          </div>
+
+          <div>
+            <label className="text-xs uppercase tracking-widest mb-2 block" style={{ color: "#666" }}>Password</label>
+            <input
+              type="password"
+              placeholder="Min 6 characters"
+              value={form.password}
+              onChange={(e) => setForm({ ...form, password: e.target.value })}
+              className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
+              style={{ background: "#0d0d0d", border: "1px solid #2a2a2a", color: "#f5f5f5" }}
+            />
+          </div>
+
+          <div>
+            <label className="text-xs uppercase tracking-widest mb-2 block" style={{ color: "#666" }}>Confirm Password</label>
+            <input
+              type="password"
+              placeholder="Repeat your password"
+              value={form.confirm_password}
+              onChange={(e) => setForm({ ...form, confirm_password: e.target.value })}
               className="w-full rounded-lg px-4 py-3 text-sm focus:outline-none"
               style={{ background: "#0d0d0d", border: "1px solid #2a2a2a", color: "#f5f5f5" }}
             />
