@@ -109,12 +109,16 @@ export default function RegisterForm() {
       return;
     }
 
-    // 4. Mark coupon used
-    await supabase
-      .from("coupons")
-      .update({ is_used: true, used_by: newUser.id })
-      .eq("id", coupon.id);
-
+    // 4. Mark coupon used with timestamp and user name
+await supabase
+  .from("coupons")
+  .update({
+    is_used: true,
+    used_by: newUser.id,
+    used_by_name: form.full_name,
+    used_at: new Date().toISOString(),
+  })
+  .eq("id", coupon.id);
     // 5. Create referral record
     await supabase.from("referrals").insert([{
       upline_id: upline.id,
