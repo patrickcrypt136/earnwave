@@ -90,70 +90,100 @@ export default function AdminPage() {
   }
 
   async function fetchAll(): Promise<void> {
-    const { data: subsData } = await supabase
-      .from("task_completions")
-      .select("*, users(full_name, email, balance), tasks(title, reward, platform)")
-      .order("date", { ascending: false });
-    setSubmissions(subsData || []);
+  const { data: subsData } = await supabase
+    .from("task_completions")
+    .select("*, users(full_name, email, balance), tasks(title, reward, platform)")
+    .order("date", { ascending: false });
+  setSubmissions(subsData || []);
 
-    const { data: withData } = await supabase
-      .from("withdrawals")
-      .select("*, users(full_name, email)")
-      .order("created_at", { ascending: false });
-    setWithdrawals(withData || []);
+  const { data: withData } = await supabase
+    .from("withdrawals")
+    .select("*, users(full_name, email)")
+    .order("created_at", { ascending: false });
+  setWithdrawals(withData || []);
 
-    const { data: couponData } = await supabase
-      .from("coupons")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setCoupons(couponData || []);
+  const { data: couponData } = await supabase
+    .from("coupons")
+    .select("*")
+    .order("created_at", { ascending: false });
+  setCoupons(couponData || []);
 
-    const { data: tasksData } = await supabase
-      .from("tasks")
-      .select("*")
-      .order("created_at", { ascending: false });
-    setTasks(tasksData || []);
+  const { data: tasksData } = await supabase
+    .from("tasks")
+    .select("*")
+    .order("created_at", { ascending: false });
+  setTasks(tasksData || []);
 
-    const { data: settingData } = await supabase
-      .from("settings")
-      .select("value")
-      .eq("key", "payout_date")
-      .single();
-    if (settingData) setPayoutDate(settingData.value);
-  }
+  const { data: settingData } = await supabase
+    .from("settings")
+    .select("value")
+    .eq("key", "payout_date")
+    .single();
+  if (settingData) setPayoutDate(settingData.value);
+}
 
   async function handleApproveSubmission(sub: Submission): Promise<void> {
-    setLoading(true);
-    await supabase
-      .from("task_completions")
-      .update({ status: "approved" })
-      .eq("id", sub.id);
+  if (loading) return;
+  setLoading(true);
 
-    const { data: user } = await supabase
-      .from("users")
-      .select("points")
-      .eq("id", sub.user_id)
-      .single();
+  // Check if already approved to prevent double adding points
+  const { data: existing } = await supabase
+    .from("task_completions")
+    .select("status")
+    .eq("id", sub.id)
+    .single();
 
-    await supabase
-      .from("users")
-      .update({ points: (user?.points || 0) + sub.tasks.reward })
-      .eq("id", sub.user_id);
-
-    fetchAll();
+  if (existing?.status !== "pending") {
     setLoading(false);
+    fetchAll();
+    return;
   }
 
-  async function handleRejectSubmission(id: string): Promise<void> {
-    setLoading(true);
-    await supabase
-      .from("task_completions")
-      .update({ status: "rejected" })
-      .eq("id", id);
-    fetchAll();
+  await supabase
+    .from("task_completions")
+    .update({ status: "approved" })
+    .eq("id", sub.id);
+
+  const { data: user } = await supabase
+    .from("users")
+    .select("points")
+    .eq("id", sub.user_id)
+    .single();
+
+  await supabase
+    .from("users")
+    .update({ points: (user?.points || 0) + sub.tasks.reward })
+    .eq("id", sub.user_id);
+
+  await fetchAll();
+  setLoading(false);
+}
+
+async function handleRejectSubmission(id: string): Promise<void> {
+  if (loading) return;
+  setLoading(true);
+
+  // Check if already rejected
+  const { data: existing } = await supabase
+    .from("task_completions")
+    .select("status")
+    .eq("id", id)
+    .single();
+
+  if (existing?.status !== "pending") {
     setLoading(false);
+    fetchAll();
+    return;
   }
 
+  await supabase
+    .from("task_completions")
+    .update({ status: "rejected" })
+    .eq("id", id);
+
+  await fetchAll();
+  setLoading(false);
+}
   async function handleApproveWithdrawal(id: string): Promise<void> {
     setLoading(true);
     await supabase
@@ -243,7 +273,7 @@ export default function AdminPage() {
   }
 
   const pendingSubmissions = submissions.filter((s) => s.status === "pending");
-  const reviewedSubmissions = submissions.filter((s) => s.status !== "pending");
+  const reviewedSubmissions = submissions.filter((s) => s.status === "approved" || s.status === "rejected");
   const pendingWithdrawals = withdrawals.filter((w) => w.status === "pending");
   const reviewedWithdrawals = withdrawals.filter((w) => w.status !== "pending");
   const unusedCoupons = coupons.filter((c) => !c.is_used);
